@@ -1,5 +1,6 @@
 ---
 import { sbGetBySlug, sbGetSlugsByPrefix } from "../../lib/storyblok";
+import "../../styles/global.css";
 
 export async function getStaticPaths() {
   const slugs = await sbGetSlugsByPrefix("product");
@@ -12,20 +13,74 @@ const { slug } = Astro.params;
 const story = await sbGetBySlug(`product/${slug}`);
 const p = story.content;
 ---
-<html>
-  <head><title>{p.name}</title></head>
-  <body>
-    <a href="/">← Back</a>
-    <h1>{p.name}</h1>
-    <div>SKU: {p.sku}</div>
-    <p style="max-width: 60ch;">{p.description}</p>
+<html lang="en">
+  <head>
+    <title>{p.name}</title>
+  </head>
+  <body class="min-h-screen bg-slate-50 text-slate-900">
+    <div class="mx-auto flex min-h-screen max-w-6xl flex-col px-4 py-6 md:px-8">
+      <header class="mb-6 flex items-center justify-between gap-4">
+        <a
+          href="/"
+          class="inline-flex items-center text-sm font-medium text-sky-700 hover:text-sky-900"
+        >
+          <span class="mr-1 text-lg">←</span>
+          <span>Back to overview</span>
+        </a>
+      </header>
 
-    {p.image_url && (
-      <img src={p.image_url} alt={p.name} style="max-width: 520px; display:block; margin: 16px 0;" />
-    )}
+      <main class="flex flex-1 flex-col gap-10 md:flex-row">
+        <section class="flex-1">
+          <h1 class="mb-3 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
+            {p.name}
+          </h1>
 
-    {p.pdf_url && (
-      <p><a href={p.pdf_url} target="_blank" rel="noreferrer">Download PDF</a></p>
-    )}
+          <div class="mb-4 flex flex-wrap items-center gap-3 text-sm text-slate-600">
+            <span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium">
+              SKU: <span class="ml-1 font-semibold text-slate-900">{p.sku}</span>
+            </span>
+
+            {p.pdf_url && (
+              <a
+                href={p.pdf_url}
+                target="_blank"
+                rel="noreferrer"
+                class="inline-flex items-center rounded-full bg-sky-600 px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-sky-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
+              >
+                View data sheet
+              </a>
+            )}
+          </div>
+
+          <p class="mb-6 max-w-xl text-sm leading-relaxed text-slate-700">{p.description}</p>
+        </section>
+
+        <aside class="flex-1 md:pl-6">
+          <div class="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
+            {p.image_url && (
+              <figure class="overflow-hidden rounded-xl border border-slate-100 bg-slate-50">
+                <img
+                  src={p.image_url}
+                  alt={p.name}
+                  class="mx-auto max-h-80 w-full max-w-md object-contain p-4"
+                  loading="lazy"
+                />
+              </figure>
+            )}
+
+            {p.pdf_url && (
+              <a
+                href={p.pdf_url}
+                target="_blank"
+                rel="noreferrer"
+                class="mt-4 inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-50 hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
+              >
+                Open data sheet (PDF)
+              </a>
+            )}
+          </div>
+        </aside>
+      </main>
+    </div>
   </body>
 </html>
