@@ -136,44 +136,114 @@ onMounted(() => {
 </script>
 
 <template>
-  <main>
-    <h1>Cart</h1>
+  <main class="mx-auto max-w-4xl px-4 py-8">
+    <header class="mb-6 flex items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-semibold tracking-tight text-slate-900">Cart</h1>
+        <p id="cart-summary" class="mt-1 text-sm text-slate-600">
+          <span v-if="count === 0">Your cart is empty.</span>
+          <span v-else> Total items: {{ count }} </span>
+        </p>
+      </div>
 
-    <p id="cart-summary">
-      <span v-if="count === 0">Your cart is empty.</span>
-      <span v-else> Total items: {{ count }} </span>
-    </p>
+      <a
+        href="/product/demo-product"
+        class="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:border-slate-300 hover:text-slate-900"
+      >
+        ← Back to demo product
+      </a>
+    </header>
 
-    <div id="cart-items">
-      <article v-for="item in items" :key="item.id" class="mb-4 border p-2">
-        <h2>{{ item.productName }}</h2>
-        <p>Part: {{ item.partNumber }}</p>
-        <p>Price: ${{ (Number.isFinite(item.price) ? Number(item.price) : 0).toFixed(2) }}</p>
-        <p v-if="item.baseSku">Base SKU: {{ item.baseSku }}</p>
-        <p v-if="item.notes">Notes: {{ item.notes }}</p>
+    <section
+      id="cart-items"
+      class="mb-8 space-y-4 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm"
+    >
+      <p v-if="items.length === 0" class="text-sm text-slate-600">
+        Add a configuration from the demo product page to see it here.
+      </p>
 
-        <div v-if="item.options.length > 0">
-          <p>Options:</p>
-          <ul>
-            <li v-for="opt in item.options" :key="opt.code">
-              {{ opt.code }}: {{ opt.value }}
-            </li>
-          </ul>
+      <article
+        v-for="item in items"
+        :key="item.id"
+        class="rounded-xl border border-slate-200 bg-slate-50/70 p-4"
+      >
+        <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+          <div class="space-y-1">
+            <h2 class="text-sm font-semibold text-slate-900">
+              {{ item.productName }}
+            </h2>
+            <p class="text-xs text-slate-600">Part: {{ item.partNumber }}</p>
+            <p class="text-xs text-slate-600">
+              Price:
+              <span class="font-medium">
+                ${{ (Number.isFinite(item.price) ? Number(item.price) : 0).toFixed(2) }}
+              </span>
+            </p>
+            <p v-if="item.baseSku" class="text-xs text-slate-600">
+              Base SKU: <span class="font-mono">{{ item.baseSku }}</span>
+            </p>
+            <p v-if="item.notes" class="text-xs text-slate-600">
+              Notes: <span class="font-normal">{{ item.notes }}</span>
+            </p>
+
+            <div v-if="item.options.length > 0" class="pt-2">
+              <p class="mb-1 text-xs font-medium text-slate-700">Options</p>
+              <ul class="space-y-0.5 text-xs text-slate-600">
+                <li v-for="opt in item.options" :key="opt.code">
+                  <span class="font-mono text-[11px] uppercase tracking-wide text-slate-500">
+                    {{ opt.code }}
+                  </span>
+                  <span class="mx-1 text-slate-400">•</span>
+                  <span>{{ opt.value }}</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="flex flex-col items-end gap-3 md:items-stretch">
+            <div class="inline-flex items-center justify-end gap-2 rounded-full bg-white px-2 py-1">
+              <button
+                type="button"
+                class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-40"
+                @click="handleDelta(item, -1)"
+              >
+                -
+              </button>
+              <span class="px-1 text-xs font-medium text-slate-800">
+                Qty: {{ item.qty }}
+              </span>
+              <button
+                type="button"
+                class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                @click="handleDelta(item, 1)"
+              >
+                +
+              </button>
+            </div>
+
+            <button
+              type="button"
+              class="inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-medium text-rose-700 hover:border-rose-300 hover:bg-rose-100"
+              @click="handleRemove(item)"
+            >
+              Remove item
+            </button>
+          </div>
         </div>
-
-        <div class="mt-2 flex items-center gap-2">
-          <button type="button" @click="handleDelta(item, -1)">-</button>
-          <span>Qty: {{ item.qty }}</span>
-          <button type="button" @click="handleDelta(item, 1)">+</button>
-        </div>
-
-        <button type="button" class="mt-2" @click="handleRemove(item)">Remove</button>
       </article>
-    </div>
+    </section>
 
-    <div id="cart-actions">
-      <div id="checkout-details">
-        <label for="customer-email">Email for receipt and order confirmation</label>
+    <section
+      id="cart-actions"
+      class="flex flex-col gap-6 rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm"
+    >
+      <div id="checkout-details" class="space-y-2">
+        <label
+          for="customer-email"
+          class="block text-sm font-medium text-slate-800"
+        >
+          Email for receipt and order confirmation
+        </label>
         <input
           id="customer-email"
           type="email"
@@ -181,16 +251,45 @@ onMounted(() => {
           autocomplete="email"
           required
           v-model="customerEmail"
+          class="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-sky-500 focus:bg-white focus:ring-2 focus:ring-sky-100"
+          placeholder="you@example.com"
         />
       </div>
-      <div id="checkout-buttons">
-        <button id="clear-cart" type="button" @click="handleClear">Clear cart</button>
-        <button id="pay-now" type="button" :disabled="isSubmitting" @click="handlePayNow">
-          {{ isSubmitting ? "Redirecting…" : "Pay Now" }}
+
+      <div
+        id="checkout-buttons"
+        class="flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <div class="flex flex-wrap gap-3">
+          <button
+            id="clear-cart"
+            type="button"
+            class="inline-flex items-center justify-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-medium text-slate-700 hover:border-slate-300 hover:bg-slate-100 disabled:opacity-50"
+            @click="handleClear"
+          >
+            Clear cart
+          </button>
+
+          <button
+            id="pay-now"
+            type="button"
+            :disabled="isSubmitting"
+            class="inline-flex items-center justify-center rounded-full bg-sky-600 px-5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-sky-400"
+            @click="handlePayNow"
+          >
+            {{ isSubmitting ? "Redirecting…" : "Pay now with Stripe" }}
+          </button>
+        </div>
+
+        <button
+          type="button"
+          class="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-medium text-slate-700 shadow-sm hover:border-slate-300 hover:bg-slate-50"
+          @click="$router?.push ? $router.push('/checkout') : (window.location.href = '/checkout')"
+        >
+          Go to order summary
         </button>
-        <a href="/checkout">Proceed</a>
       </div>
-    </div>
+    </section>
   </main>
 </template>
 

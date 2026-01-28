@@ -84,14 +84,14 @@ const p = story.content;
                 Open data sheet (PDF)
               </a>
             )}
-          </div>
 
-          <AddToCartPoc
-            client:load
-            productSlug={slug}
-            productName={p.name}
-            productSku={p.sku}
-          />
+            <AddToCartPoc
+              client:load
+              productSlug={slug}
+              productName={p.name}
+              productSku={p.sku}
+            />
+          </div>
         </aside>
       </main>
       <script type="module">
