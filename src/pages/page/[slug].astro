@@ -1,6 +1,12 @@
 ---
-export const prerender = false;
-import { sbGetBySlug } from "../../lib/storyblok";
+import { sbGetBySlug, sbGetSlugsByPrefix } from "../../lib/storyblok";
+
+export async function getStaticPaths() {
+  const slugs = await sbGetSlugsByPrefix("page");
+  return slugs.map((slug) => ({
+    params: { slug },
+  }));
+}
 
 const { slug } = Astro.params;
 const story = await sbGetBySlug(`page/${slug}`);
