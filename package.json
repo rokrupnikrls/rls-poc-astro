@@ -16,8 +16,10 @@
 		"@astrojs/mdx": "4.3.12",
 		"@astrojs/rss": "4.0.14",
 		"@astrojs/sitemap": "3.6.0",
+		"@astrojs/vue": "^5.1.4",
 		"astro": "5.16.2",
-		"typescript": "5.9.3"
+		"typescript": "5.9.3",
+		"vue": "^3.5.27"
 	},
 	"devDependencies": {
 		"@astrojs/tailwind": "^6.0.2",

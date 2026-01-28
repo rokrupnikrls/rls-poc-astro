@@ -21,9 +21,9 @@ import "../styles/global.css";
       </p>
     </main>
     <Footer />
-
-    <script type="module" src="/src/scripts/cart-global.ts"></script>
     <script type="module">
+      import { clearCart } from "../lib/cart";
+
       async function fetchStatus(sessionId) {
         const res = await fetch(
           `/api/checkout/status?session_id=${encodeURIComponent(sessionId)}`,
@@ -54,9 +54,7 @@ import "../styles/global.css";
             detailsEl.textContent =
               "Thank you for your order. A confirmation email will be sent shortly.";
 
-            if (window.rlsCart && typeof window.rlsCart.clearCart === "function") {
-              window.rlsCart.clearCart();
-            }
+            clearCart();
           } else {
             statusEl.textContent = "Payment pending or failed.";
             detailsEl.textContent =

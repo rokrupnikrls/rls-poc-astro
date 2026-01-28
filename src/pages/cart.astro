@@ -3,6 +3,7 @@ import BaseHead from "../components/BaseHead.astro";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import "../styles/global.css";
+import CartPage from "../components/CartPage.vue";
 ---
 
 <!doctype html>
@@ -12,34 +13,8 @@ import "../styles/global.css";
   </head>
   <body>
     <Header />
-    <main>
-      <h1>Cart</h1>
-
-      <p id="cart-summary">Loading cart…</p>
-
-      <div id="cart-items"></div>
-
-      <div id="cart-actions">
-        <div id="checkout-details">
-          <label for="customer-email">Email for receipt and order confirmation</label>
-          <input
-            id="customer-email"
-            type="email"
-            name="customer-email"
-            autocomplete="email"
-            required
-          />
-        </div>
-        <div id="checkout-buttons">
-          <button id="clear-cart" type="button">Clear cart</button>
-          <button id="pay-now" type="button">Pay Now</button>
-          <a href="/checkout">Proceed</a>
-        </div>
-      </div>
-    </main>
+    <CartPage client:load />
     <Footer />
-
-    <script type="module" src="/src/scripts/cart-global.ts"></script>
     <script type="module">
       const itemsContainer = document.getElementById("cart-items");
       const summaryEl = document.getElementById("cart-summary");

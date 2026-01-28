@@ -2,6 +2,7 @@
 import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import CartCount from '../components/CartCount.vue';
 import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 ---
 
@@ -14,7 +15,7 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 		<Header />
 		<nav>
 			<a href="/cart">
-				Cart (<span id="cart-count">0</span>)
+				Cart (<CartCount client:load />)
 			</a>
 		</nav>
 		<main>
@@ -51,7 +52,6 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 			</p>
 		</main>
 		<Footer />
-		<script type="module" src="/src/scripts/cart-global.ts"></script>
 		<script type="module">
 			const span = document.getElementById("cart-count");
 			if (span) {

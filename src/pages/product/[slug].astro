@@ -1,6 +1,7 @@
 ---
 import { sbGetBySlug, sbGetSlugsByPrefix } from "../../lib/storyblok";
 import "../../styles/global.css";
+import AddToCartPoc from "../../components/AddToCartPoc.vue";
 
 export async function getStaticPaths() {
   const slugs = await sbGetSlugsByPrefix("product");
@@ -85,57 +86,14 @@ const p = story.content;
             )}
           </div>
 
-          <section class="mt-6 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
-            <h2 class="mb-3 text-lg font-semibold text-slate-900">Add to cart (PoC)</h2>
-            <p class="mb-3 text-sm text-slate-700">
-              This is a simple proof-of-concept configurator. It will create a configured part
-              number based on the base SKU and add it to your cart.
-            </p>
-
-            <div class="mb-3 flex items-center gap-2 text-sm">
-              <button
-                id="poc-qty-minus"
-                type="button"
-                class="inline-flex h-8 w-8 items-center justify-center rounded border border-slate-300 bg-white text-slate-900"
-              >
-                -
-              </button>
-              <span id="poc-qty" class="min-w-[3rem] text-center text-sm font-medium">
-                1
-              </span>
-              <button
-                id="poc-qty-plus"
-                type="button"
-                class="inline-flex h-8 w-8 items-center justify-center rounded border border-slate-300 bg-white text-slate-900"
-              >
-                +
-              </button>
-            </div>
-
-            <div class="mb-3">
-              <label for="poc-notes" class="mb-1 block text-xs font-medium text-slate-700">
-                Notes (optional)
-              </label>
-              <textarea
-                id="poc-notes"
-                rows="3"
-                class="w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900"
-              ></textarea>
-            </div>
-
-            <button
-              id="poc-add-to-cart"
-              type="button"
-              class="mb-2 inline-flex w-full items-center justify-center rounded bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-50 hover:bg-slate-800"
-            >
-              Add configured item to cart
-            </button>
-
-            <p id="poc-message" class="text-xs text-slate-700"></p>
-          </section>
+          <AddToCartPoc
+            client:load
+            productSlug={slug}
+            productName={p.name}
+            productSku={p.sku}
+          />
         </aside>
       </main>
-      <script type="module" src="/src/scripts/cart-global.ts"></script>
       <script type="module">
 
         const container = document.querySelector("[data-product-slug]");
