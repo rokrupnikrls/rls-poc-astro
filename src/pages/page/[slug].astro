@@ -1,0 +1,16 @@
+---
+export const prerender = false;
+import { sbGetBySlug } from "../../lib/storyblok";
+
+const { slug } = Astro.params;
+const story = await sbGetBySlug(`page/${slug}`);
+const c = story.content;
+---
+<html>
+  <head><title>{c.title}</title></head>
+  <body>
+    <a href="/">← Back</a>
+    <h1>{c.title}</h1>
+    <pre style="white-space: pre-wrap;">{c.body}</pre>
+  </body>
+</html>

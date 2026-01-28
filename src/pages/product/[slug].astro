@@ -1,0 +1,25 @@
+---
+export const prerender = false;
+import { sbGetBySlug } from "../../lib/storyblok";
+
+const { slug } = Astro.params;
+const story = await sbGetBySlug(`product/${slug}`);
+const p = story.content;
+---
+<html>
+  <head><title>{p.name}</title></head>
+  <body>
+    <a href="/">← Back</a>
+    <h1>{p.name}</h1>
+    <div>SKU: {p.sku}</div>
+    <p style="max-width: 60ch;">{p.description}</p>
+
+    {p.image_url && (
+      <img src={p.image_url} alt={p.name} style="max-width: 520px; display:block; margin: 16px 0;" />
+    )}
+
+    {p.pdf_url && (
+      <p><a href={p.pdf_url} target="_blank" rel="noreferrer">Download PDF</a></p>
+    )}
+  </body>
+</html>
