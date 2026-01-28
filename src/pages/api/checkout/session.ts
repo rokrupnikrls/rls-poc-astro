@@ -175,7 +175,7 @@ export const POST: APIRoute = async ({ request }) => {
 			"http://localhost:4321";
 	} catch (err) {
 		console.error(err);
-		return new Response(JSON.stringify({ error: "Server misconfiguration" }), {
+		return new Response(JSON.stringify({ error: "Server misconfiguration: " + (err as Error).message }), {
 			status: 500,
 			headers: { "Content-Type": "application/json" },
 		});
