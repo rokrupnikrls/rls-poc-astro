@@ -28,7 +28,7 @@ type RequestBody = {
 function getEnv(key: string): string {
 	const value = (import.meta as any).env?.[key];
 	if (!value || typeof value !== "string") {
-		throw new Error(`Missing required environment variable: ${key}`);
+		throw new Error(`Missing required environment variable: ${key} ;  ${JSON.stringify(import.meta.env)}`);
 	}
 	return value;
 }
