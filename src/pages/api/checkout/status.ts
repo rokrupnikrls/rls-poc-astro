@@ -2,15 +2,7 @@ import type { APIRoute } from "astro";
 
 export const prerender = false;
 
-function getEnv(key: string): string {
-	const value = (import.meta as any).env?.[key];
-	if (!value || typeof value !== "string") {
-		throw new Error(`Missing required environment variable: ${key}`);
-	}
-	return value;
-}
-
-export const GET: APIRoute = async ({ request }) => {
+export const GET: APIRoute = async ({ request, locals }) => {
 	const url = new URL(request.url);
 	const sessionId = url.searchParams.get("session_id");
 
@@ -21,15 +13,19 @@ export const GET: APIRoute = async ({ request }) => {
 		});
 	}
 
-	let stripeSecret: string;
-	try {
-		stripeSecret = getEnv("STRIPE_SECRET_KEY");
-	} catch (err) {
-		console.error(err);
-		return new Response(JSON.stringify({ error: "Server misconfiguration (status): " + (err as Error).message }), {
-			status: 500,
-			headers: { "Content-Type": "application/json" },
-		});
+	const runtimeEnv = (locals as any)?.runtime?.env ?? {};
+	const stripeSecret = runtimeEnv.STRIPE_SECRET_KEY;
+	if (!stripeSecret || typeof stripeSecret !== "string") {
+		console.error("Missing STRIPE_SECRET_KEY in runtime env for status endpoint");
+		return new Response(
+			JSON.stringify({
+				error: "Server misconfiguration (status): Missing STRIPE_SECRET_KEY",
+			}),
+			{
+				status: 500,
+				headers: { "Content-Type": "application/json" },
+			},
+		);
 	}
 
 	const response = await fetch(

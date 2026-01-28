@@ -24,14 +24,6 @@ type CompactCart = {
 	items?: CompactItem[];
 };
 
-function getEnv(key: string): string {
-	const value = (import.meta as any).env?.[key];
-	if (!value || typeof value !== "string") {
-		throw new Error(`Missing required environment variable: ${key}`);
-	}
-	return value;
-}
-
 function timingSafeEqual(a: string, b: string): boolean {
 	if (a.length !== b.length) return false;
 	let result = 0;
@@ -99,9 +91,18 @@ async function verifyStripeSignature(
 async function shopifyFetch(
 	path: string,
 	opts: { method?: string; body?: unknown },
+	runtimeEnv: Record<string, unknown>,
 ) {
-	const storeDomain = getEnv("SHOPIFY_STORE_DOMAIN");
-	const token = getEnv("SHOPIFY_ADMIN_ACCESS_TOKEN");
+	const storeDomain = runtimeEnv.SHOPIFY_STORE_DOMAIN;
+	const token = runtimeEnv.SHOPIFY_ADMIN_ACCESS_TOKEN;
+	if (
+		!storeDomain ||
+		typeof storeDomain !== "string" ||
+		!token ||
+		typeof token !== "string"
+	) {
+		throw new Error("Missing Shopify environment variables");
+	}
 	const apiVersion =
 		(import.meta as any).env?.SHOPIFY_API_VERSION ?? "2024-10";
 
@@ -126,7 +127,10 @@ async function shopifyFetch(
 	return response.json();
 }
 
-async function findOrCreateShopifyCustomer(email: string | undefined) {
+async function findOrCreateShopifyCustomer(
+	email: string | undefined,
+	runtimeEnv: Record<string, unknown>,
+) {
 	if (!email) return null;
 
 	try {
@@ -134,6 +138,7 @@ async function findOrCreateShopifyCustomer(email: string | undefined) {
 		const result = await shopifyFetch(
 			`/customers/search.json?query=${searchQuery}`,
 			{},
+			runtimeEnv,
 		);
 
 		const customers = (result as any).customers ?? [];
@@ -141,14 +146,18 @@ async function findOrCreateShopifyCustomer(email: string | undefined) {
 			return customers[0];
 		}
 
-		const createResult = await shopifyFetch("/customers.json", {
-			method: "POST",
-			body: {
-				customer: {
-					email,
+		const createResult = await shopifyFetch(
+			"/customers.json",
+			{
+				method: "POST",
+				body: {
+					customer: {
+						email,
+					},
 				},
 			},
-		});
+			runtimeEnv,
+		);
 
 		return (createResult as any).customer ?? null;
 	} catch (err) {
@@ -174,6 +183,7 @@ function parseCompactCart(metadata: any): CompactCart | null {
 
 async function createShopifyOrderFromStripe(
 	event: StripeEvent,
+	runtimeEnv: Record<string, unknown>,
 ): Promise<void> {
 	const session = event.data.object;
 	const customerEmail: string | undefined = session.customer_email ?? undefined;
@@ -190,6 +200,7 @@ async function createShopifyOrderFromStripe(
 
 	const customer = await findOrCreateShopifyCustomer(
 		compact?.email ?? customerEmail,
+		runtimeEnv,
 	);
 
 	const line_items = items.map((item) => {
@@ -258,21 +269,24 @@ async function createShopifyOrderFromStripe(
 	}
 
 	try {
-		await shopifyFetch("/orders.json", {
-			method: "POST",
-			body: orderPayload,
-		});
+		await shopifyFetch(
+			"/orders.json",
+			{
+				method: "POST",
+				body: orderPayload,
+			},
+			runtimeEnv,
+		);
 	} catch (err) {
 		console.error("Failed to create Shopify order from Stripe webhook", err);
 	}
 }
 
-export const POST: APIRoute = async ({ request }) => {
-	let webhookSecret: string;
-	try {
-		webhookSecret = getEnv("STRIPE_WEBHOOK_SECRET");
-	} catch (err) {
-		console.error(err);
+export const POST: APIRoute = async ({ request, locals }) => {
+	const runtimeEnv = (locals as any)?.runtime?.env ?? {};
+	const webhookSecret = runtimeEnv.STRIPE_WEBHOOK_SECRET;
+	if (!webhookSecret || typeof webhookSecret !== "string") {
+		console.error("Missing STRIPE_WEBHOOK_SECRET in runtime env");
 		return new Response("Webhook misconfigured", { status: 500 });
 	}
 
@@ -298,7 +312,7 @@ export const POST: APIRoute = async ({ request }) => {
 
 	try {
 		if (event.type === "checkout.session.completed") {
-			await createShopifyOrderFromStripe(event);
+			await createShopifyOrderFromStripe(event, runtimeEnv);
 		}
 	} catch (err) {
 		console.error("Error handling Stripe webhook", err);

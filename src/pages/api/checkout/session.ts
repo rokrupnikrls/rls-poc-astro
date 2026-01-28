@@ -25,14 +25,6 @@ type RequestBody = {
 	locale?: string;
 };
 
-function getEnv(key: string): string {
-	const value = (import.meta as any).env?.[key];
-	if (!value || typeof value !== "string") {
-		throw new Error(`Missing required environment variable: ${key} ;  ${JSON.stringify(import.meta.env)}`);
-	}
-	return value;
-}
-
 function validateRequestBody(body: unknown): RequestBody {
 	if (!body || typeof body !== "object") {
 		throw new Error("Invalid JSON body");
@@ -151,7 +143,7 @@ function buildCartCompactMetadata(input: RequestBody): string {
 	return compact;
 }
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
 	let parsed: RequestBody;
 	try {
 		const json = await request.json();
@@ -168,7 +160,11 @@ export const POST: APIRoute = async ({ request }) => {
 	let stripeSecret: string;
 	let publicSiteUrl: string;
 	try {
-		stripeSecret = getEnv("STRIPE_SECRET_KEY");
+		const runtimeEnv = (locals as any)?.runtime?.env ?? {};
+		stripeSecret = runtimeEnv.STRIPE_SECRET_KEY;
+		if (!stripeSecret || typeof stripeSecret !== "string") {
+			throw new Error("Missing STRIPE_SECRET_KEY");
+		}
 		publicSiteUrl =
 			(import.meta as any).env?.PUBLIC_SITE_URL ??
 			(import.meta as any).env?.SITE ??
