@@ -26,7 +26,7 @@ export const GET: APIRoute = async ({ request }) => {
 		stripeSecret = getEnv("STRIPE_SECRET_KEY");
 	} catch (err) {
 		console.error(err);
-		return new Response(JSON.stringify({ error: "Server misconfiguration" }), {
+		return new Response(JSON.stringify({ error: "Server misconfiguration (status): " + (err as Error).message }), {
 			status: 500,
 			headers: { "Content-Type": "application/json" },
 		});
