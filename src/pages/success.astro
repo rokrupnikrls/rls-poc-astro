@@ -1,0 +1,77 @@
+---
+import BaseHead from "../components/BaseHead.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import "../styles/global.css";
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead title="Payment status" description="Stripe payment result." />
+  </head>
+  <body>
+    <Header />
+    <main>
+      <h1>Payment status</h1>
+      <p id="status-message">Checking your payment…</p>
+      <p id="status-details"></p>
+      <p>
+        <a href="/">Back to homepage</a>
+      </p>
+    </main>
+    <Footer />
+
+    <script type="module" src="/src/scripts/cart-global.ts"></script>
+    <script type="module">
+      async function fetchStatus(sessionId) {
+        const res = await fetch(
+          `/api/checkout/status?session_id=${encodeURIComponent(sessionId)}`,
+        );
+        if (!res.ok) {
+          throw new Error("Failed to load checkout status");
+        }
+        return res.json();
+      }
+
+      async function init() {
+        const statusEl = document.getElementById("status-message");
+        const detailsEl = document.getElementById("status-details");
+        if (!statusEl || !detailsEl) return;
+
+        const params = new URLSearchParams(window.location.search);
+        const sessionId = params.get("session_id");
+
+        if (!sessionId) {
+          statusEl.textContent = "Missing payment session information.";
+          return;
+        }
+
+        try {
+          const data = await fetchStatus(sessionId);
+          if (data.paid) {
+            statusEl.textContent = "Payment successful 🎉";
+            detailsEl.textContent =
+              "Thank you for your order. A confirmation email will be sent shortly.";
+
+            if (window.rlsCart && typeof window.rlsCart.clearCart === "function") {
+              window.rlsCart.clearCart();
+            }
+          } else {
+            statusEl.textContent = "Payment pending or failed.";
+            detailsEl.textContent =
+              "If you believe this is an error, please contact support or try again.";
+          }
+        } catch (err) {
+          console.error(err);
+          statusEl.textContent = "Could not determine payment status.";
+          detailsEl.textContent =
+            "Please refresh the page or contact support if the issue persists.";
+        }
+      }
+
+      void init();
+    </script>
+  </body>
+</html>
+

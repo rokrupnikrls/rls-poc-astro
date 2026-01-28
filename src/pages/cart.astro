@@ -1,0 +1,302 @@
+---
+import BaseHead from "../components/BaseHead.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import "../styles/global.css";
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead title="Cart" description="Your configured items cart." />
+  </head>
+  <body>
+    <Header />
+    <main>
+      <h1>Cart</h1>
+
+      <p id="cart-summary">Loading cart…</p>
+
+      <div id="cart-items"></div>
+
+      <div id="cart-actions">
+        <div id="checkout-details">
+          <label for="customer-email">Email for receipt and order confirmation</label>
+          <input
+            id="customer-email"
+            type="email"
+            name="customer-email"
+            autocomplete="email"
+            required
+          />
+        </div>
+        <div id="checkout-buttons">
+          <button id="clear-cart" type="button">Clear cart</button>
+          <button id="pay-now" type="button">Pay Now</button>
+          <a href="/checkout">Proceed</a>
+        </div>
+      </div>
+    </main>
+    <Footer />
+
+    <script type="module" src="/src/scripts/cart-global.ts"></script>
+    <script type="module">
+      const itemsContainer = document.getElementById("cart-items");
+      const summaryEl = document.getElementById("cart-summary");
+      const clearBtn = document.getElementById("clear-cart");
+      const payNowBtn = document.getElementById("pay-now");
+      const emailInput = document.getElementById("customer-email");
+
+      const DEFAULT_CURRENCY = "EUR";
+
+      function getCartApi() {
+        const api = window.rlsCart;
+        if (!api) return null;
+        return api;
+      }
+
+      function getCartState() {
+        const api = getCartApi();
+        if (!api) return { items: [] };
+        return api.loadCart();
+      }
+
+      if (itemsContainer && summaryEl && clearBtn && payNowBtn && emailInput) {
+        function renderCart() {
+          const api = getCartApi();
+          if (!api) return;
+
+          const state = api.loadCart();
+          const count = api.getItemCount();
+
+          if (count === 0) {
+            summaryEl.textContent = "Your cart is empty.";
+          } else {
+            summaryEl.textContent = `Total items: ${count}`;
+          }
+
+          itemsContainer.innerHTML = "";
+
+          state.items.forEach((item) => {
+            const wrapper = document.createElement("article");
+            wrapper.dataset.itemId = item.id;
+
+            const title = document.createElement("h2");
+            title.textContent = item.productName;
+            wrapper.appendChild(title);
+
+            const part = document.createElement("p");
+            part.textContent = `Part: ${item.partNumber}`;
+            wrapper.appendChild(part);
+
+            const price = Number.isFinite(item.price) ? Number(item.price) : 0;
+            const priceEl = document.createElement("p");
+            priceEl.textContent = `Price: $${price.toFixed(2)}`;
+            wrapper.appendChild(priceEl);
+
+            if (item.baseSku) {
+              const base = document.createElement("p");
+              base.textContent = `Base SKU: ${item.baseSku}`;
+              wrapper.appendChild(base);
+            }
+
+            if (item.notes) {
+              const notes = document.createElement("p");
+              notes.textContent = `Notes: ${item.notes}`;
+              wrapper.appendChild(notes);
+            }
+
+            if (item.options.length > 0) {
+              const optsTitle = document.createElement("p");
+              optsTitle.textContent = "Options:";
+              wrapper.appendChild(optsTitle);
+
+              const list = document.createElement("ul");
+              item.options.forEach((opt) => {
+                const li = document.createElement("li");
+                li.textContent = `${opt.code}: ${opt.value}`;
+                list.appendChild(li);
+              });
+              wrapper.appendChild(list);
+            }
+
+            const qtyRow = document.createElement("div");
+
+            const minusBtn = document.createElement("button");
+            minusBtn.type = "button";
+            minusBtn.textContent = "-";
+            minusBtn.dataset.action = "decrease";
+            qtyRow.appendChild(minusBtn);
+
+            const qtyText = document.createElement("span");
+            qtyText.textContent = ` Qty: ${item.qty} `;
+            qtyRow.appendChild(qtyText);
+
+            const plusBtn = document.createElement("button");
+            plusBtn.type = "button";
+            plusBtn.textContent = "+";
+            plusBtn.dataset.action = "increase";
+            qtyRow.appendChild(plusBtn);
+
+            wrapper.appendChild(qtyRow);
+
+            const removeBtn = document.createElement("button");
+            removeBtn.type = "button";
+            removeBtn.textContent = "Remove";
+            removeBtn.dataset.action = "remove";
+            wrapper.appendChild(removeBtn);
+
+            itemsContainer.appendChild(wrapper);
+          });
+        }
+
+        function handleItemAction(target) {
+          const api = getCartApi();
+          if (!api) return;
+
+          const article = target.closest("article");
+          if (!article) return;
+          const itemId = article.dataset.itemId;
+          if (!itemId) return;
+
+          const action = target.dataset.action;
+          if (!action) return;
+
+          if (action === "increase" || action === "decrease") {
+            const state = api.loadCart();
+            const item = state.items.find((it) => it.id === itemId);
+            if (!item) return;
+
+            const delta = action === "increase" ? 1 : -1;
+            const newQty = item.qty + delta;
+            api.updateQty(itemId, newQty);
+            renderCart();
+          } else if (action === "remove") {
+            api.removeItem(itemId);
+            renderCart();
+          }
+        }
+
+        itemsContainer.addEventListener("click", (event) => {
+          const target = event.target;
+          if (!(target instanceof HTMLElement)) return;
+          handleItemAction(target);
+        });
+
+        clearBtn.addEventListener("click", () => {
+          const api = getCartApi();
+          if (!api) return;
+
+          api.clearCart();
+          renderCart();
+        });
+
+        async function handlePayNowClick() {
+          const api = getCartApi();
+          if (!api) return;
+
+          const emailEl = emailInput;
+          if (!(emailEl instanceof HTMLInputElement)) return;
+
+          const customerEmail = emailEl.value.trim();
+          if (!customerEmail) {
+            alert("Please enter your email address.");
+            emailEl.focus();
+            return;
+          }
+
+          const state = api.loadCart();
+          if (!state.items || state.items.length === 0) {
+            alert("Your cart is empty.");
+            return;
+          }
+
+          // Basic email format check
+          if (!customerEmail.includes("@")) {
+            alert("Please enter a valid email address.");
+            emailEl.focus();
+            return;
+          }
+
+          const items = state.items.map((item) => {
+            const priceNumber = Number.isFinite(item.price)
+              ? Number(item.price)
+              : 0;
+            const unitPriceCents = Math.max(
+              1,
+              Math.round(priceNumber * 100) || 10000,
+            );
+
+            return {
+              productName: item.productName,
+              baseSku: item.baseSku,
+              partNumber: item.partNumber,
+              qty: item.qty,
+              options: item.options ?? [],
+              unitPriceCents,
+              currency: DEFAULT_CURRENCY,
+              notes: item.notes,
+            };
+          });
+
+          const payload = {
+            customerEmail,
+            items,
+            locale:
+              typeof navigator !== "undefined" ? navigator.language : undefined,
+          };
+
+          payNowBtn.disabled = true;
+          payNowBtn.textContent = "Redirecting…";
+
+          try {
+            const response = await fetch("/api/checkout/session", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) {
+              const errorData = await response.json().catch(() => ({}));
+              const message =
+                errorData && errorData.error
+                  ? errorData.error
+                  : "Failed to start checkout. Please try again.";
+              alert(message);
+              return;
+            }
+
+            const data = await response.json();
+            if (data && data.url) {
+              window.location.href = data.url;
+            } else {
+              alert("Unexpected response from checkout. Please try again.");
+            }
+          } catch (err) {
+            console.error("Error creating checkout session", err);
+            alert("An error occurred while starting checkout. Please try again.");
+          } finally {
+            payNowBtn.disabled = false;
+            payNowBtn.textContent = "Pay Now";
+          }
+        }
+
+        payNowBtn.addEventListener("click", () => {
+          void handlePayNowClick();
+        });
+
+        window.addEventListener("rls:cart-updated", renderCart);
+        window.addEventListener("storage", (ev) => {
+          if (ev.key === "rls_cart_v1") {
+            renderCart();
+          }
+        });
+
+        renderCart();
+      }
+    </script>
+  </body>
+</html>
+

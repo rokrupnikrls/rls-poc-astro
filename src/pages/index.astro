@@ -12,6 +12,11 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 	</head>
 	<body>
 		<Header />
+		<nav>
+			<a href="/cart">
+				Cart (<span id="cart-count">0</span>)
+			</a>
+		</nav>
 		<main>
 			<h1>🧑‍🚀 Hello, Astronaut!</h1>
 			<p>
@@ -46,5 +51,29 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 			</p>
 		</main>
 		<Footer />
+		<script type="module" src="/src/scripts/cart-global.ts"></script>
+		<script type="module">
+			const span = document.getElementById("cart-count");
+			if (span) {
+				const update = () => {
+					try {
+						const api = window.rlsCart;
+						if (!api) return;
+						span.textContent = String(api.getItemCount());
+					} catch {
+						span.textContent = "0";
+					}
+				};
+
+				update();
+
+				window.addEventListener("rls:cart-updated", update);
+				window.addEventListener("storage", (ev) => {
+					if (ev.key === "rls_cart_v1") {
+						update();
+					}
+				});
+			}
+		</script>
 	</body>
 </html>
